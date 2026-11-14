@@ -1,104 +1,104 @@
 # Foundry MCP
 
-Foundry é um servidor MCP local para trabalhar em projetos Roblox com Codex, Claude e outros clientes stdio. Ele combina o servidor integrado ao Roblox Studio com ferramentas para inspecionar, editar, testar e coordenar mudanças no place aberto.
+Foundry is a local MCP server for working on Roblox projects with Codex, Claude, and other stdio clients. It combines the server built into Roblox Studio with tools for inspecting, editing, testing, and coordinating changes in the open place.
 
-No Windows, a entrada Rust faz a descoberta do catálogo enquanto o servidor Python inicia em paralelo. A disponibilidade das ferramentas nativas acompanha a versão instalada do Studio. O modo individual é o padrão.
+On Windows, the Rust launcher discovers tools while the Python server starts in parallel. Native tool availability follows your installed Studio version. Individual mode is the default.
 
-## Funcionalidades
+## Features
 
-| Área | Recursos |
+| Area | Capabilities |
 | --- | --- |
-| Cena | Hierarquia, seleção, propriedades tipadas, tags, atributos, alterações em lote e exportação de modelos. |
-| Luau | Fontes do editor, referências, mapa de impacto, diffs, formatação StyLua, lint Selene e análise Luau LSP com tipos Roblox. |
-| Planos | Preparar, revisar, aplicar e reverter mudanças combinando scripts e instâncias, com verificação de conflitos e validação em cópia local. |
-| Sync | Exportar scripts e mapa Rojo, preparar sincronização bidirecional e acompanhar alterações. Conflitos pausam o sync. |
-| Playtests | Cenários versionados com asserções, logs e capturas, simulação de jogadores e dispositivos e gravação e repetição de bugs. |
-| Equipe | Identidades de agentes, tarefas, bloqueios por caminho, mensagens, contexto compartilhado e evidências para revisão. |
-| Monitor | Atividade em tempo real em um app Qt, cursores por agente no Studio e atalhos para alvos e resultados de playtest. |
-| Open Cloud | Analytics, versões, publicação, assets, passes, produtos e DataStore, conforme permissões e escopos disponíveis. |
-| Informação atual | Acompanhar sinais e estado do Studio e consultar fontes públicas na web. |
+| Scene | Inspect the hierarchy, selection, typed properties, tags, and attributes. Edit instances in batches and export models. |
+| Luau | Read editor source, find references, map the impact of changes, and review diffs. Format with StyLua, lint with Selene, and check Roblox types with Luau LSP. |
+| Change plans | Prepare, review, apply, and revert changes that combine scripts and instances. Check for conflicts and validate plans in a local copy. |
+| Sync | Export scripts and a Rojo sourcemap, prepare two-way synchronization, and watch for changes. Sync pauses when a conflict occurs. |
+| Playtests | Save versioned scenarios with assertions, logs, and screenshots. Simulate players and devices, and record and replay bugs. |
+| Collaboration | Register agents, assign tasks, lock paths, exchange messages, share context, and attach evidence for review. |
+| Monitor | Follow tool activity in a Qt desktop app. See each agent's cursor in Studio and open targets or playtest results. |
+| Open Cloud | Work with analytics, published versions, assets, passes, products, and DataStores, subject to the permissions and scopes available. |
+| Live information | Watch Studio state and signals and consult public web sources. |
 
-O cliente descobre as ferramentas via `tools/list`. Para ver os parâmetros e a descrição de uma ferramenta, chame `extra_help` com seu nome exato. Consulte o [guia de ferramentas](enhanced/HELP.md) para exemplos.
+Clients discover available tools through `tools/list`. Call `extra_help` with a tool's exact name to see its description and arguments. The [tool guide](enhanced/HELP.md) includes workflow examples.
 
-## Instalação no Windows x64
+## Installation on Windows x64
 
-1. Instale o Roblox Studio atualizado e o Python 3.10 ou mais recente. Confirme com `python --version` no PowerShell.
-2. Baixe **Foundry-MCP-1.0.9-windows-x64.zip** na [release v1.0.9](../../releases/tag/v1.0.9). Extraia a pasta inteira. Mantenha o executável junto dos demais arquivos em `enhanced`.
-3. Abra um place no Studio. Em **Assistant → … → Manage MCP Servers**, ative **Enable Studio as MCP server**. [Guia do Roblox](https://create.roblox.com/docs/studio/mcp)
-4. Escolha uma pasta local existente para o projeto. Substitua `C:\Tools\Foundry-MCP` e `C:\Projects\MeuJogo` pelos seus caminhos nos exemplos.
-5. Configure um cliente abaixo e reinicie-o.
-6. Peça ao assistente para rodar `list_roblox_studios` e depois `extra_help` com `{"tool":"extra_impact"}`. Se houver várias janelas, indique qual place deseja usar.
+1. Install the latest Roblox Studio and Python 3.10 or later. Run `python --version` in PowerShell to check.
+2. Download **Foundry-MCP-1.0.9-windows-x64.zip** from the [v1.0.9 release](../../releases/tag/v1.0.9). Extract the entire folder and keep the executable with the other files in `enhanced`.
+3. Open a place in Roblox Studio. In **Assistant → … → Manage MCP Servers**, turn on **Enable Studio as MCP server**. [Roblox setup guide](https://create.roblox.com/docs/studio/mcp)
+4. Choose an existing local folder for your project. Substitute your own paths for `C:\Tools\Foundry-MCP` and `C:\Projects\MyGame` in the examples below.
+5. Configure your client using one of the methods below and restart it.
+6. Ask the assistant to call `list_roblox_studios`, then call `extra_help` with `{"tool":"extra_impact"}`. If several Studio windows are open, specify the place you want to work on.
 
 ### Codex
 
 ~~~powershell
-codex mcp add Foundry_MCP -- "C:\Tools\Foundry-MCP\enhanced\foundry-bootstrap.exe" --workspace "C:\Projects\MeuJogo" --session-label Codex
+codex mcp add Foundry_MCP -- "C:\Tools\Foundry-MCP\enhanced\foundry-bootstrap.exe" --workspace "C:\Projects\MyGame" --session-label Codex
 codex mcp list
 ~~~
 
-Para configurar pelo arquivo `config.toml` do Codex, adicione:
+To configure Codex directly, add this section to its `config.toml`:
 
 ~~~toml
 [mcp_servers.Foundry_MCP]
 command = 'C:\Tools\Foundry-MCP\enhanced\foundry-bootstrap.exe'
-args = ['--workspace', 'C:\Projects\MeuJogo', '--session-label', 'Codex']
+args = ['--workspace', 'C:\Projects\MyGame', '--session-label', 'Codex']
 ~~~
 
 ### Claude Code
 
 ~~~powershell
-claude mcp add --transport stdio --scope user Foundry_MCP -- "C:\Tools\Foundry-MCP\enhanced\foundry-bootstrap.exe" --workspace "C:\Projects\MeuJogo" --session-label "Claude Code"
+claude mcp add --transport stdio --scope user Foundry_MCP -- "C:\Tools\Foundry-MCP\enhanced\foundry-bootstrap.exe" --workspace "C:\Projects\MyGame" --session-label "Claude Code"
 claude mcp list
 ~~~
 
 ### Claude Desktop
 
-Em **Settings → Developer → Edit Config**, adicione a entrada abaixo ao objeto `mcpServers` existente. Preserve as outras entradas.
+Under **Settings → Developer → Edit Config**, add the `Foundry_MCP` entry to the existing `mcpServers` object. Preserve any other entries.
 
 ~~~json
 {
   "mcpServers": {
     "Foundry_MCP": {
       "command": "C:\\Tools\\Foundry-MCP\\enhanced\\foundry-bootstrap.exe",
-      "args": ["--workspace", "C:\\Projects\\MeuJogo", "--session-label", "Claude Desktop"]
+      "args": ["--workspace", "C:\\Projects\\MyGame", "--session-label", "Claude Desktop"]
     }
   }
 }
 ~~~
 
-### Usar Python diretamente
+### Run through Python directly
 
-Em clientes stdio, também é possível configurar `python.exe` como comando. Passe o caminho absoluto de `enhanced/server.py` como primeiro argumento, seguido de `--workspace` e `--session-label`. Se o launcher Rust precisar de um Python fora do PATH, configure `FOUNDRY_PYTHON` com o caminho absoluto do interpretador.
+For stdio clients, you can also set the command to `python.exe`. Pass the absolute path to `enhanced/server.py` as the first argument, followed by `--workspace` and `--session-label`. If the Rust launcher needs a Python installation outside your PATH, set `FOUNDRY_PYTHON` to the absolute path of that interpreter.
 
-### Abrir o monitor
+### Open the monitor
 
-Dê dois cliques em **Abrir Monitor.cmd**. O atalho instala Qt via pip caso necessário. Para iniciar pelo terminal na pasta extraída:
+Double-click **Open Monitor.cmd**. The shortcut installs Qt through pip if needed. To start it from a terminal in the extracted folder:
 
 ~~~powershell
 python -m pip install -r enhanced/monitor-requirements.txt
 python enhanced/monitor.py
 ~~~
 
-O monitor e os clientes usam a mesma pasta de dados, por padrão `%LOCALAPPDATA%\StudioMCPExtra`. Se configurar `--data-dir` no servidor, passe o mesmo valor ao monitor. Use **Hide cursors** para ocultar os cursores. Os argumentos `--no-cursors` e `--no-monitor` controlam a visualização pelo servidor.
+The monitor and clients share a data directory. By default, this is `%LOCALAPPDATA%\StudioMCPExtra`. If you set `--data-dir` for the server, pass the same path to the monitor. Use **Hide cursors** to hide agent cursors in Studio. The server also accepts `--no-cursors` and `--no-monitor`.
 
-## Primeiro workflow
+## First workflow
 
-1. Selecione a janela do Studio com `list_roblox_studios`.
-2. Rode `extra_impact` com um caminho como `["ServerScriptService","Config"]`. Use `include_source: true` para obter a fonte e o hash da mesma captura.
-3. Use `extra_mixed_changes` para preparar o plano e revisar o diff.
-4. Aplique o plano e rode um cenário com `extra_scenario`. Use o rollback do plano se precisar restaurar a edição.
-5. Ative o modo equipe quando mais de um agente trabalhar no mesmo projeto. Para compartilhar locks e histórico local, configure a mesma pasta de dados.
+1. Select the Studio window with `list_roblox_studios`.
+2. Run `extra_impact` with a path such as `["ServerScriptService","Config"]`. Set `include_source: true` to get the source and its hash from the same capture.
+3. Use `extra_mixed_changes` to prepare a plan and review the diff.
+4. Apply the plan and run a scenario with `extra_scenario`. Use the plan's rollback action if you need to restore the previous state.
+5. Enable team mode when multiple agents are working on the same project. Use the same data directory to share local locks and history.
 
-## Permissões e dados
+## Permissions and data
 
-- O histórico, os planos, os locks e a atividade do monitor são armazenados localmente. As informações recebidas pelo cliente seguem as regras de dados do provedor de IA.
-- A maioria das operações de editor usa a sessão do Studio. Algumas operações Open Cloud usam permissões concedidas no Studio, e certos fluxos REST aceitam `STUDIO_MCP_EXTRA_ROBLOX_API_KEY` no ambiente. [Permissões do Studio](https://create.roblox.com/docs/studio/mcp)
-- O monitor exibe chamadas observáveis e agentes registrados. Alguns controles da barra e fluxos de publicação exigem uma janela interativa do Studio. A identificação por OCR na barra pode usar Windows OCR e FFmpeg.
-- O mapa de impacto faz análise estática. Referências dinâmicas e comportamento de runtime requerem inspeção ou playtest.
+- Foundry stores history, plans, locks, and monitor activity locally. Information received by your MCP client is subject to your AI provider's data policies.
+- Most editor operations use the Studio session. Some Open Cloud operations use permissions granted in Studio. Certain REST workflows accept the `STUDIO_MCP_EXTRA_ROBLOX_API_KEY` environment variable. [Roblox Studio MCP permissions](https://create.roblox.com/docs/studio/mcp)
+- The monitor displays observable tool calls and registered agents. Some ribbon controls and publishing workflows require an interactive Studio window. Ribbon label recognition can use Windows OCR and FFmpeg.
+- Impact analysis is static. Dynamic references and runtime behavior require inspection or playtests.
 
-## Desenvolvimento
+## Development
 
-O pacote da release inclui os binários Windows. Para reconstruir o launcher com Rust instalado, rode na raiz:
+The release includes Windows binaries. To rebuild the launcher with Rust installed, run these commands from the repository root:
 
 ~~~powershell
 python enhanced/generate_workbench_catalog.py
@@ -107,4 +107,4 @@ Copy-Item enhanced/bootstrap/target/release/foundry-bootstrap.exe enhanced/found
 python -m unittest discover -s tests
 ~~~
 
-O Foundry é um projeto independente baseado no [servidor MCP open source da Roblox](https://github.com/Roblox/studio-rust-mcp-server). Consulte a [licença MIT](LICENSE) e os [avisos de terceiros](enhanced/THIRD-PARTY.md).
+Foundry is an independent project based on the [open-source Roblox Studio MCP server](https://github.com/Roblox/studio-rust-mcp-server). See the [MIT license](LICENSE) and [third-party notices](enhanced/THIRD-PARTY.md).
