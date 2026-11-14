@@ -1,6 +1,6 @@
 # Foundry MCP
 
-Foundry is a local MCP server for working on Roblox projects with Codex, Claude, and other stdio clients. It combines the server built into Roblox Studio with tools for inspecting, editing, testing, and coordinating changes in the open place.
+Foundry is a local MCP server for working on Roblox projects in Roblox Studio with Codex, Claude, and other compatible MCP clients. It combines the server built into Roblox Studio with tools for inspecting, editing, testing, and coordinating changes in the open place.
 
 On Windows, the Rust launcher discovers tools while the Python server starts in parallel. Native tool availability follows your installed Studio version. Individual mode is the default.
 
@@ -68,7 +68,7 @@ Under **Settings → Developer → Edit Config**, add the `Foundry_MCP` entry to
 
 ### Run through Python directly
 
-For stdio clients, you can also set the command to `python.exe`. Pass the absolute path to `enhanced/server.py` as the first argument, followed by `--workspace` and `--session-label`. If the Rust launcher needs a Python installation outside your PATH, set `FOUNDRY_PYTHON` to the absolute path of that interpreter.
+If your MCP client launches local servers, you can set the command to `python.exe`. Pass the absolute path to `enhanced/server.py` as the first argument, followed by `--workspace` and `--session-label`. If the Rust launcher needs a Python installation outside your PATH, set `FOUNDRY_PYTHON` to the absolute path of that interpreter.
 
 ### Open the monitor
 

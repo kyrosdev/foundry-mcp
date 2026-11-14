@@ -1,4 +1,4 @@
-"""Multiplex native stdio RPC without mixing client and internal request IDs."""
+"""Route native RPC over standard input and output with separate client and internal request IDs."""
 import json
 import threading
 import uuid
@@ -95,7 +95,7 @@ class Bridge:
                 reply.complete(ConnectionError(reason))
 
 class ResilientBridge:
-    """Reconnect stdio and replay initialization; retry only explicitly read-only work."""
+    """Reconnect the upstream process, replay initialization, and retry explicitly read-only work."""
     supports_read_retry=True
 
     def __init__(self,command,emit,stderr=None):

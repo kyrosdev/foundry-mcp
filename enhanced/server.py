@@ -1,4 +1,4 @@
-"""Transparent stdio MCP extension for StudioMCP. Python 3.10+, no packages."""
+"""Roblox Studio MCP extension over standard input and output. Python 3.10+, no external packages."""
 import argparse
 import json
 import os
