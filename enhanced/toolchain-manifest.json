@@ -1,0 +1,23 @@
+{
+  "luau-analyze.exe": {
+    "sha256": "d63128c49ac2cf3801df77ce3b0bad042e90b26324c09f6563885017461e0521"
+  },
+  "luau-compile.exe": {
+    "sha256": "c6221974a0d8c9567445188095a16fb734c64481b09381bd7a6dae537f2758eb"
+  },
+  "selene.exe": {
+    "sha256": "d23624daddb3cde848e2bd99aa257cd694eb027c04171d17fec232b3784d3b21"
+  },
+  "stylua.exe": {
+    "sha256": "b125543e4312c9b6b1a113040f2d217cc24e25c0b31d7445d9697fa7ad7e056d"
+  },
+  "versions": {
+    "stylua": "2.5.2",
+    "selene": "0.31.0",
+    "luau": "0.745",
+    "luau-lsp": "1.70.1"
+  },
+  "luau-lsp.exe": {
+    "sha256": "3c834f9402c82681ef2b8cc171c769f239eb094028bb31469296e1f0f4c489a6"
+  }
+}

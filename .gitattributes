@@ -1,0 +1,5 @@
+* text=auto eol=lf
+enhanced/api/** -text
+enhanced/bin/** -text
+enhanced/*.exe -text
+enhanced/licenses/** -text
