@@ -15,6 +15,8 @@ import time
 import threading
 import uuid
 from team import Team, schema as team_schema
+import blender_bridge
+from version import VERSION
 from live import Observatory, schema as live_schema
 from eventpush import EventHub
 from webinfo import WebInfo, schema as web_schema
@@ -91,6 +93,9 @@ class Store:
                 columns = {row['name'] for row in db.execute('PRAGMA table_info(team_tasks)')}
                 if 'require_receipts' not in columns:
                     db.execute('ALTER TABLE team_tasks ADD COLUMN require_receipts INTEGER NOT NULL DEFAULT 0')
+                member_columns = {row['name'] for row in db.execute('PRAGMA table_info(team_members)')}
+                if 'mode' not in member_columns:
+                    db.execute("ALTER TABLE team_members ADD COLUMN mode TEXT NOT NULL DEFAULT 'team'")
             if session:
                 db.execute('INSERT OR REPLACE INTO sessions VALUES(?,?,?)', (*session, time.time()))
 
@@ -214,7 +219,7 @@ def definitions():
                  'profile_seconds':{'type':'number','minimum':0.25,'maximum':10},
                  'remote_probe':{'type':'object'}},'additionalProperties':False}},
               'cleanup':{'type':'boolean','default':True}}, ('studio_id','steps')),
-    ] + team_schema(tool) + live_schema(tool) + web_schema(tool) + api_schema(tool) + advanced_schema(tool) + studio_plan_schema(tool) + workflow_schema(tool) + project_sync_schema(tool) + sync_watch_schema(tool) + studio_testing_schema(tool) + studio_publish_schema(tool)
+    ] + team_schema(tool) + blender_bridge.schema(tool) + live_schema(tool) + web_schema(tool) + api_schema(tool) + advanced_schema(tool) + studio_plan_schema(tool) + workflow_schema(tool) + project_sync_schema(tool) + sync_watch_schema(tool) + studio_testing_schema(tool) + studio_publish_schema(tool)
 
 class Workbench:
     def __init__(self, rpc, directory, workspace, label='MCP client'):
@@ -549,6 +554,7 @@ class Workbench:
     def call(self,name,args):
         if name in ('history','script_restore') and args.get('studio_id') and self.auto_bind_projects:self.advanced.auto_bind(args['studio_id'])
         if name=='agent':return self.agent(args)
+        if name.startswith('blender_'):return blender_bridge.call(self,name,args)
         if name.startswith('team_') or name.startswith('task_'):return self.team.call(name,args)
         if name.startswith('live_'):return self.live.call(name,args)
         if name.startswith('web_'):return self.web.call(name,args)
@@ -566,7 +572,7 @@ class Workbench:
         if name=='status':
             return {'session_id':self.owner,'connection_id':self.connection_id,'workspace':str(self.workspace),'database':str(self.store.file),
                     'toolchain':{n:self.executable(n) for n in ('stylua','selene','luau-lsp')},
-                    'telemetry':False,'version':'1.0.9','team_heartbeat_seconds':10,
+                    'telemetry':False,'version':VERSION,'team_heartbeat_seconds':10,
                     'live_poll_interval_seconds':[2,60],'project_binding_warnings':self.advanced.binding_warnings,
                     'web_search_provider':'Brave' if os.environ.get('BRAVE_SEARCH_API_KEY') else 'Bing public RSS (best effort)'}
         if name=='sessions':

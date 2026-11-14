@@ -12,9 +12,10 @@ ROOT = Path(__file__).resolve().parent
 sys.path.insert(0, str(ROOT))
 from transport import ResilientBridge, RPCError
 from catalog import advertise
+from version import VERSION
 INSTRUCTIONS = (
-    '\nFoundry MCP: individual mode is the default. Use team mode only for agents sharing a project. '
-    'Join with extra_team_join, claim tasks for your edit paths, renew leases and attach required '
+    '\nFoundry MCP: work directly when solo. When sharing work, register each participant with extra_team_join using the same project and Studio IDs. '
+    'Auto mode requires tasks once teammates are present. In team mode, claim edit paths, renew leases and attach required '
     'extra_evidence receipts. Agents sharing one connection register with extra_agent and pass as_agent. '
     'Use list_roblox_studios for studio_id and get_studio_state for the DataModel. '
     'Call extra_help with a tool name for its complete schema and usage notes. '
@@ -143,6 +144,7 @@ def main():
     parser.add_argument('--workspace', default=str(ROOT.parent), help='Allowed local script sync root')
     parser.add_argument('--data-dir', default=str(Path(os.environ.get('LOCALAPPDATA', str(Path.home()/'.local/share'))) / 'StudioMCPExtra'))
     parser.add_argument('--session-label', default='MCP client')
+    parser.add_argument('--no-updates', action='store_true', help='Disable automatic stable updates')
     parser.add_argument('--no-monitor', action='store_true', help='Disable local activity snapshots')
     parser.add_argument('--no-cursors', action='store_true', help='Disable Studio viewport cursors')
     args = parser.parse_args()
@@ -168,6 +170,7 @@ def main():
     monitor = None
     activity_thread = None
     runtime_warmup = None
+    update_started = False
     runtime_lock = threading.Lock()
     session_label = args.session_label
     native_readonly = set()
@@ -301,7 +304,7 @@ def main():
         return result
 
     def dispatch(message, playtest_report):
-        nonlocal session_label, runtime_warmup
+        nonlocal session_label, runtime_warmup, update_started
         request_id = message['id']
         try:
             method = message['method']
@@ -375,7 +378,7 @@ def main():
                         result['tools'].extend(advertise(t) for name, t in extensions.items() if name not in existing)
                 if method == 'initialize':
                     result['serverInfo'] = {**result.get('serverInfo', {}), 'name':'Foundry MCP',
-                                            'version':'1.0.9'}
+                                            'version':VERSION}
                     client_name = params.get('clientInfo', {}).get('name') if isinstance(params.get('clientInfo'), dict) else None
                     if args.session_label == 'MCP client' and isinstance(client_name, str) and client_name.strip():
                         with runtime_lock:
@@ -393,6 +396,17 @@ def main():
                     if workbench is None and runtime_warmup is None:
                         runtime_warmup = threading.Thread(target=warm_runtime, name='foundry-warmup')
                         runtime_warmup.start()
+                    if (not update_started and not args.no_updates
+                            and os.environ.get('FOUNDRY_INSTALL_ROOT')
+                            and not os.environ.get('FOUNDRY_DISABLE_UPDATES')):
+                        update_started = True
+                        def check_updates():
+                            try:
+                                from stable_update import check
+                                check(Path(os.environ['FOUNDRY_INSTALL_ROOT']), VERSION)
+                            except Exception as error:
+                                sys.stderr.write(f'Foundry stable channel: {error}\n')
+                        threading.Thread(target=check_updates, name='foundry-update', daemon=True).start()
             if monitor and method == 'tools/call' and params.get('name') == 'list_roblox_studios':
                 monitor.observe_places(result)
             return not result.get('isError',False)

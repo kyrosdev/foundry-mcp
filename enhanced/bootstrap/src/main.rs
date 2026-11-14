@@ -295,9 +295,51 @@ fn process(
     conversation.and(relayed)
 }
 
+fn stable_version(value: &str) -> Option<[u32; 3]> {
+    let values: Vec<_> = value
+        .split('.')
+        .map(|part| {
+            if part.is_empty() || part.len() > 6 || !part.bytes().all(|c| c.is_ascii_digit()) {
+                return None;
+            }
+            part.parse::<u32>().ok()
+        })
+        .collect::<Option<_>>()?;
+    values.try_into().ok()
+}
+
 fn run() -> io::Result<()> {
     let args: Vec<_> = env::args_os().skip(1).collect();
     let executable = env::current_exe()?;
+    let local_root = executable
+        .parent()
+        .and_then(Path::parent)
+        .ok_or_else(|| io::Error::other("Foundry installation path is invalid"))?;
+    let original_root = env::var_os("FOUNDRY_INSTALL_ROOT").map(PathBuf::from);
+    let install_root = original_root.as_deref().unwrap_or(local_root);
+    if original_root.is_none()
+        && env::var_os("FOUNDRY_DISABLE_UPDATES").is_none()
+        && !args
+            .iter()
+            .take_while(|arg| *arg != "--upstream")
+            .any(|arg| arg == "--no-updates")
+    {
+        let updates = local_root.join(".foundry-updates");
+        if let Ok(active) = fs::read_to_string(updates.join("active")) {
+            let active = active.trim();
+            if stable_version(active) > stable_version(env!("CARGO_PKG_VERSION")) {
+                let updated = updates.join(active).join("enhanced/foundry-bootstrap.exe");
+                if updated.is_file() {
+                    let status = Command::new(updated)
+                        .env("FOUNDRY_INSTALL_ROOT", install_root)
+                        .args(&args)
+                        .status()?;
+                    std::process::exit(status.code().unwrap_or(1));
+                }
+            }
+        }
+    }
+
     let server = executable.with_file_name("server.py");
     if !server.is_file() {
         return Err(io::Error::other(
@@ -306,7 +348,12 @@ fn run() -> io::Result<()> {
     }
     let python = env::var_os("FOUNDRY_PYTHON").unwrap_or_else(|| "python.exe".into());
     let mut python = Command::new(python);
-    python.arg(server).args(&args);
+    python
+        .env("FOUNDRY_INSTALL_ROOT", install_root)
+        .arg(server)
+        .arg("--workspace")
+        .arg(install_root)
+        .args(&args);
     let official_command = official_command().filter(|_| {
         !args
             .iter()

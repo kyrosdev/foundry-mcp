@@ -134,6 +134,39 @@ class TeamTests(unittest.TestCase):
         members=self.a.call('team_board',{'project_id':'game'})['members']
         self.assertFalse(next(v for v in members if v['session']==self.c.owner)['online'])
 
+    def test_auto_mode_activates_for_same_project_and_studio(self):
+        room = {'project_id': 'auto-demo', 'studio_id': 'target'}
+        result = self.a.call('team_join', room)
+        self.assertEqual(result['effective_mode'], 'individual')
+        self.a.assert_script_lock('target', ['Workspace', 'Coin'])
+        self.b.call('team_join', {**room, 'studio_id': 'other-target'})
+        self.c.call('team_join', {**room, 'project_id': 'different-project'})
+        self.a.team.authorize_studio_action('target')
+
+        self.assertEqual(self.b.call('team_join', room)['effective_mode'], 'team')
+        self.assertEqual(self.a.call('team_board', {'project_id': 'auto-demo'})['effective_mode'], 'team')
+        with self.assertRaisesRegex(ValueError, 'claim an active task'):
+            self.a.assert_script_lock('target', ['Workspace', 'Coin'])
+        task = self.b.call('task_create', {'project_id': 'auto-demo', 'title': 'Coin',
+                                         'paths': [['Workspace', 'Coin']], 'claim_now': True})
+        self.b.assert_script_lock('target', ['Workspace', 'Coin'])
+        self.b.close()
+        with self.assertRaises(ValueError):
+            self.a.assert_script_lock('target', ['Workspace', 'Coin'])
+        with self.a.store.connect() as db:
+            db.execute('UPDATE team_tasks SET expires=0 WHERE id=?', (task['id'],))
+        board = self.a.call('team_board', {'project_id': 'auto-demo'})
+        self.assertEqual(board['effective_mode'], 'individual')
+        self.a.assert_script_lock('target', ['Workspace', 'Coin'])
+
+    def test_explicit_team_mode_retains_solo_reservation_requirement(self):
+        room = {'project_id': 'strict-team', 'studio_id': 'target'}
+        self.assertEqual(self.a.call('team_join', {**room, 'mode': 'team'})['effective_mode'], 'team')
+        with self.assertRaisesRegex(ValueError, 'claim an active task'):
+            self.a.team.authorize_studio_action('target')
+        self.assertEqual(self.a.call('team_join', room)['mode'], 'team')
+        self.assertEqual(self.a.call('team_join', {**room, 'mode': 'auto'})['effective_mode'], 'individual')
+
     def test_manual_lock_colon_and_ancestor_conflicts(self):
         self.a.store.acquire('script:other:'+json.dumps(['Folder:Name']),'a')
         with self.assertRaises(ValueError):self.b.store.acquire('script:other:'+json.dumps(['Folder:Name','Child']),'b')

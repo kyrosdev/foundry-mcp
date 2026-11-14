@@ -2,7 +2,7 @@
 
 Foundry is a local MCP server for working on Roblox projects in Roblox Studio with Codex, Claude, and other compatible MCP clients. It combines the server built into Roblox Studio with tools for inspecting, editing, testing, and coordinating changes in the open place.
 
-On Windows, the Rust launcher discovers tools while the Python server starts in parallel. Native tool availability follows your installed Studio version. Individual mode is the default.
+On Windows, the Rust launcher discovers tools while the Python server starts in parallel. Native tool availability follows your installed Studio version. Work directly when solo. The Foundry coordination mode switches automatically when registered teammates share the same project and Studio window.
 
 ## Features
 
@@ -23,7 +23,7 @@ Clients discover available tools through `tools/list`. Call `extra_help` with a 
 ## Installation on Windows x64
 
 1. Install the latest Roblox Studio and Python 3.10 or later. Run `python --version` in PowerShell to check.
-2. Download **Foundry-MCP-1.0.9-windows-x64.zip** from the [v1.0.9 release](../../releases/tag/v1.0.9). Extract the entire folder and keep the executable with the other files in `enhanced`.
+2. Download **Foundry-MCP-1.1.0-windows-x64.zip** from the [v1.1.0 release](../../releases/tag/v1.1.0). Extract the entire folder and keep the executable with the other files in `enhanced`.
 3. Open a place in Roblox Studio. In **Assistant → … → Manage MCP Servers**, turn on **Enable Studio as MCP server**. [Roblox setup guide](https://create.roblox.com/docs/studio/mcp)
 4. Choose an existing local folder for your project. Substitute your own paths for `C:\Tools\Foundry-MCP` and `C:\Projects\MyGame` in the examples below.
 5. Configure your client using one of the methods below and restart it.
@@ -81,13 +81,39 @@ python enhanced/monitor.py
 
 The monitor and clients share a data directory. By default, this is `%LOCALAPPDATA%\StudioMCPExtra`. If you set `--data-dir` for the server, pass the same path to the monitor. Use **Hide cursors** to hide agent cursors in Studio. The server also accepts `--no-cursors` and `--no-monitor`.
 
+## Connect Blender
+
+1. Install the **Foundry-Blender-Bridge-1.1.0.zip** add-on from the same release. In Blender, open **Edit → Preferences → Add-ons**, choose **Install from Disk**, and enable **Foundry Blender Bridge**.
+2. Keep the same Foundry MCP connection in your client. Call `extra_blender_sessions` to discover the open Blender session, then use its `session_id` with `extra_blender_scene` or `extra_blender_object`.
+3. Use `extra_blender_create` to create a mesh primitive and `extra_blender_edit` to change its transform or material. Save the Blender project through Blender when ready.
+
+For shared work, join using the `studio_id` returned by `extra_blender_sessions`, and reserve paths such as `["Objects", "Crate"]`. Auto mode uses the same rules in both apps. If you configure a custom Foundry data directory, start Blender with `FOUNDRY_DATA_DIR` set to that directory.
+
+## Stable updates
+
+The Windows launcher checks the official GitHub stable release after catalog discovery, at most once per day. It verifies the package size and GitHub SHA-256, stages the update in the installation directory, and activates it when the MCP client reconnects. Keep the installation directory writable and configure your client from the original extracted folder. Use `--no-updates` to pin that installation, or run `python enhanced/stable_update.py --check-now` to check immediately.
+
+The Blender add-on is versioned separately and can be updated through Blender's Add-ons panel.
+
 ## First workflow
 
 1. Select the Studio window with `list_roblox_studios`.
 2. Run `extra_impact` with a path such as `["ServerScriptService","Config"]`. Set `include_source: true` to get the source and its hash from the same capture.
 3. Use `extra_mixed_changes` to prepare a plan and review the diff.
 4. Apply the plan and run a scenario with `extra_scenario`. Use the plan's rollback action if you need to restore the previous state.
-5. Enable team mode when multiple agents are working on the same project. Use the same data directory to share local locks and history.
+5. When delegating work, have each participant call `extra_team_join` with the same `project_id` and `studio_id` and use the same Foundry data directory.
+
+### Automatic coordination
+
+New project registrations use `mode: "auto"`. A solo agent can edit directly. Once another registered agent is online in the same project and Studio window, writes require an active task with the appropriate reserved paths. Live tasks and pending reviews keep their reservations even when an agent disconnects. Once those reservations are released and only one agent remains, auto mode returns to individual editing.
+
+Set `mode: "team"` in `extra_team_join` to require reservations even when you are the only connected agent. `extra_team_board` reports the effective mode. Existing team registrations retain their previous behavior until switched to auto. Foundry recognizes collaboration through registered participants sharing its local data directory.
+
+### Verify a change in Studio
+
+Use `extra_playtest` to start Play, move the simulated player with `character_navigation`, assert the expected server or client state, and capture the viewport with `screen_capture` where supported by the current Studio mode. Save the steps with `extra_scenario` to repeat the check. Team tasks can require a verification receipt from `extra_evidence` before review.
+
+Use `extra_script_put` or an edit plan to apply the bundled Luau checks. Raw Luau execution remains available and can bypass those checks. Two-way project sync uses a three-way comparison and pauses on conflicts requiring a decision.
 
 ## Permissions and data
 
