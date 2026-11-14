@@ -4,6 +4,10 @@ Foundry is a local MCP server for working on Roblox projects in Roblox Studio wi
 
 On Windows, the Rust launcher discovers tools while the Python server starts in parallel. Native tool availability follows your installed Studio version. Work directly when solo. The Foundry coordination mode switches automatically when registered teammates share the same project and Studio window.
 
+## Bring your own agent
+
+Use Foundry from Codex, Claude Code, Claude Desktop, Cursor, or another MCP client that can launch a local server over standard input and output. Each client receives the same Foundry tool definitions for the same installation and Roblox Studio version. Connect to the same open Roblox or Blender session when switching clients. Use the same workspace and Foundry data directory to share saved plans, history, and team reservations. Each connected agent retains its own identity and its client's tool approval settings.
+
 ## Features
 
 | Area | Capabilities |
@@ -65,6 +69,18 @@ Under **Settings → Developer → Edit Config**, add the `Foundry_MCP` entry to
   }
 }
 ~~~
+
+### Cursor and other local MCP clients
+
+Run this command from the extracted Foundry folder:
+
+~~~powershell
+python enhanced/configure.py --client cursor --workspace "C:\Projects\MyGame"
+~~~
+
+Copy the generated `Foundry_MCP` entry into the `mcpServers` object in `~/.cursor/mcp.json` for all projects or `.cursor/mcp.json` for the current project. Preserve existing entries. Restart Cursor and check for Foundry under **Tools & MCP**. [Cursor MCP documentation](https://cursor.com/docs/mcp)
+
+For other local clients, use `--client generic` to get the command and arguments in JSON. Use `--client codex` to generate TOML. Use `--data-dir` if the clients share a custom Foundry data directory. Keep generated configuration with machine-specific paths in your local client settings.
 
 ### Run through Python directly
 
